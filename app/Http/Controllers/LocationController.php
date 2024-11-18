@@ -89,6 +89,92 @@ class LocationController extends Controller
         ], 400);
     }
     
-
+    public function traceHierarchy(Request $request)
+    {
+        $query = $request->input('query');
+    
+        if (!$query) {
+            return response()->json(['message' => 'Please provide a query.'], 400);
+        }
+    
+        // Search logic for each level
+        $sublocation = Sublocation::with('location.subcounty.county.country')
+            ->where('name', 'LIKE', "%$query%")
+            ->first();
+    
+        if ($sublocation) {
+            return response()->json([
+                'level' => 'sublocation',
+                'sublocation' => $sublocation->name,
+                'location' => $sublocation->location->name ?? 'Unknown',
+                'subcounty' => $sublocation->location->subcounty->name ?? 'Unknown',
+                'county' => $sublocation->location->subcounty->county->name ?? 'Unknown',
+                'country' => $sublocation->location->subcounty->county->country->name ?? 'Unknown',
+            ]);
+        }
+    
+        $location = Location::with('subcounty.county.country')
+            ->where('name', 'LIKE', "%$query%")
+            ->first();
+    
+        if ($location) {
+            return response()->json([
+                'level' => 'location',
+                'sublocation' => 'Unknown',
+                'location' => $location->name,
+                'subcounty' => $location->subcounty->name ?? 'Unknown',
+                'county' => $location->subcounty->county->name ?? 'Unknown',
+                'country' => $location->subcounty->county->country->name ?? 'Unknown',
+            ]);
+        }
+    
+        $subcounty = Subcounty::with('county.country')
+            ->where('name', 'LIKE', "%$query%")
+            ->first();
+    
+        if ($subcounty) {
+            return response()->json([
+                'level' => 'subcounty',
+                'sublocation' => 'Unknown',
+                'location' => 'Unknown',
+                'subcounty' => $subcounty->name,
+                'county' => $subcounty->county->name ?? 'Unknown',
+                'country' => $subcounty->county->country->name ?? 'Unknown',
+            ]);
+        }
+    
+        $county = County::with('country')
+            ->where('name', 'LIKE', "%$query%")
+            ->first();
+    
+        if ($county) {
+            return response()->json([
+                'level' => 'county',
+                'sublocation' => 'Unknown',
+                'location' => 'Unknown',
+                'subcounty' => 'Unknown',
+                'county' => $county->name,
+                'country' => $county->country->name ?? 'Unknown',
+            ]);
+        }
+    
+        $country = Country::where('name', 'LIKE', "%$query%")
+            ->first();
+    
+        if ($country) {
+            return response()->json([
+                'level' => 'country',
+                'sublocation' => 'Unknown',
+                'location' => 'Unknown',
+                'subcounty' => 'Unknown',
+                'county' => 'Unknown',
+                'country' => $country->name,
+            ]);
+        }
+    
+        return response()->json(['message' => 'No matching records found.'], 404);
+    }
+    
+    
 
 }

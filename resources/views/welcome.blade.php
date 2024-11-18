@@ -37,7 +37,7 @@
         <option value="">-- Select a Location --</option>
     </select> -->
 
-    <label for="location">Select Location 2:</label>
+    <label for="location">Select Location:</label>
     <select id="location" onchange="fetchSublocations()">
     <option value="">-- Select a Location --</option>
 </select>
@@ -46,6 +46,10 @@
 <select id="sublocation">
     <option value="">-- Select a Sublocation --</option>
 </select>
+
+<label for="search">Search Any  Location:</label>
+<input type="text" id="search" placeholder="Enter a country, county, subcounty, location, or sublocation">
+<button onclick="traceHierarchy()">Search</button>
 
 
 
@@ -192,6 +196,39 @@
         });
     }
 }
+function traceHierarchy() {
+    const query = document.getElementById('search').value;
+
+    if (!query) {
+        alert('Please enter a name to search.');
+        return;
+    }
+
+    axios.get('/trace-hierarchy', { params: { query } })
+        .then(response => {
+            const data = response.data;
+
+            // Clear and update dropdowns with the traced hierarchy
+            document.getElementById('country').innerHTML = `<option value="">${data.country}</option>`;
+            document.getElementById('county').innerHTML = `<option value="">${data.county}</option>`;
+            document.getElementById('subcounty').innerHTML = `<option value="">${data.subcounty}</option>`;
+            document.getElementById('location').innerHTML = `<option value="">${data.location}</option>`;
+            document.getElementById('sublocation').innerHTML = `<option value="">${data.sublocation}</option>`;
+
+            alert(`Search completed: Found at level - ${data.level}`);
+        })
+        .catch(error => {
+            if (error.response && error.response.status === 404) {
+                alert('No matching records found.');
+            } else {
+                console.error('Error tracing hierarchy:', error);
+                alert('An error occurred while tracing the hierarchy.');
+            }
+        });
+}
+
+
+
 
 </script>
 <style>

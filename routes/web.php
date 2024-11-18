@@ -10,3 +10,4 @@ Route::get('/', function () {
 
 Route::get('/search-locations', [LocationController::class, 'search']);
 
+Route::get('/trace-hierarchy', [LocationController::class, 'traceHierarchy']);
