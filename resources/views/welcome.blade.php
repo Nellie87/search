@@ -242,12 +242,13 @@ function updateDropdown(dropdownId, value, isExactMatch) {
     option.textContent = value;
     dropdown.appendChild(option);
 
-    // Enable the dropdown if "Unknown" or partially populated
+    // Disable dropdown if it's already selected
+    dropdown.disabled = isExactMatch;
+
+    // Enable and load options dynamically if "Unknown" or not exact match
     if (value === 'Unknown' || !isExactMatch) {
         dropdown.disabled = false;
         loadOptions(dropdownId); // Load options dynamically
-    } else {
-        dropdown.disabled = true; // Disable the dropdown if already selected
     }
 }
 
