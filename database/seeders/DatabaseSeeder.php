@@ -17,6 +17,8 @@ class DatabaseSeeder extends Seeder
         CountrySeeder::class,
         CountySeeder::class,
         SubcountySeeder::class,
+        LocationSeeder::class,
+        SublocationSeeder::class,
     ]);
 }
 

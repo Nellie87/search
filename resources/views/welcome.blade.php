@@ -31,15 +31,23 @@
     <select id="subcounty" onchange="fetchLocationDetails()">
     <option value="">-- Select a Subcounty --</option>
 </select>
-<div>
-<!-- Search Box -->
-<label for="search">Search </label>
-<input type="text" id="search" placeholder="Enter country or subcounty name" oninput="searchLocations()">
-</div>
-<!-- Results -->
-<div id="results">
-    <!-- Results will be populated here -->
-</div>
+
+<!-- <label for="location">Select Location:</label>
+    <select id="location">
+        <option value="">-- Select a Location --</option>
+    </select> -->
+
+    <label for="location">Select Location 2:</label>
+    <select id="location" onchange="fetchSublocations()">
+    <option value="">-- Select a Location --</option>
+</select>
+
+    <label for="sublocation">Select Sublocation:</label>
+<select id="sublocation">
+    <option value="">-- Select a Sublocation --</option>
+</select>
+
+
 
 
 
@@ -111,107 +119,80 @@
         }
     }
 
-    function searchLocations() {
-    const query = document.getElementById('search').value.trim();
-    const resultsDiv = document.getElementById('results');
-    resultsDiv.innerHTML = ''; // Clear previous results
-
-    if (query) {
-        axios.get('/search-locations', {
-            params: { query }
-        }).then(response => {
-            const countries = response.data.countries || [];
-            const counties = response.data.counties || [];
-            const subcounties = response.data.subcounties || [];
-
-            // Display countries
-            if (countries.length) {
-                const countryHeader = document.createElement('h3');
-                countryHeader.textContent = 'Countries:';
-                resultsDiv.appendChild(countryHeader);
-
-                countries.forEach(country => {
-                    const countryItem = document.createElement('div');
-                    countryItem.textContent = `Country: ${country.name}`;
-                    resultsDiv.appendChild(countryItem);
-
-                    // Show counties and subcounties for this country
-                    const countryCounties = counties.filter(c => c.country_id === country.id);
-                    if (countryCounties.length) {
-                        countryCounties.forEach(county => {
-                            const countyItem = document.createElement('div');
-                            countyItem.textContent = `  County: ${county.name}`;
-
-                            // Show subcounties
-                            const countySubcounties = subcounties.filter(s => s.county_id === county.id);
-                            if (countySubcounties.length) {
-                                countySubcounties.forEach(subcounty => {
-                                    const subcountyItem = document.createElement('div');
-                                    subcountyItem.textContent = `    Subcounty: ${subcounty.name}`;
-                                    countyItem.appendChild(subcountyItem);
-                                });
-                            }
-                            countryItem.appendChild(countyItem);
-                        });
-                    }
-                    resultsDiv.appendChild(countryItem);
-                });
-            }
-
-            // Display subcounties directly searched
-            if (subcounties.length) {
-                const subcountyHeader = document.createElement('h3');
-                subcountyHeader.textContent = 'Subcounties:';
-                resultsDiv.appendChild(subcountyHeader);
-
-                subcounties.forEach(subcounty => {
-                    const subcountyItem = document.createElement('div');
-                    subcountyItem.textContent = `Subcounty: ${subcounty.name}`;
-                    resultsDiv.appendChild(subcountyItem);
-
-                    // Find and display related county
-                    const relatedCounty = counties.find(c => c.id === subcounty.county_id);
-                    if (relatedCounty) {
-                        const countyItem = document.createElement('div');
-                        countyItem.textContent = `  County: ${relatedCounty.name}`;
-                        subcountyItem.appendChild(countyItem);
-
-                        // Find and display related country
-                        const relatedCountry = countries.find(c => c.id === relatedCounty.country_id);
-                        if (relatedCountry) {
-                            const countryItem = document.createElement('div');
-                            countryItem.textContent = `    Country: ${relatedCountry.name}`;
-                            subcountyItem.appendChild(countryItem);
-                        }
-                    }
-                });
-            }
-        }).catch(error => {
-            console.error('Error searching locations:', error);
-        });
-    }
-}
-
-    // Fetch location details when a subcounty is selected
-    function fetchLocationDetails() {
+    function fetchLocations() {
         const subcountyId = document.getElementById('subcounty').value;
+        const locationDropdown = document.getElementById('location');
+        locationDropdown.innerHTML = '<option value="">-- Select a Location --</option>';
 
         if (subcountyId) {
             axios.get('/search-locations', {
                 params: { subcounty_id: subcountyId }
             }).then(response => {
-                const subcounty = response.data.subcounty;
-                const county = response.data.county;
-                const country = response.data.country;
-
-                if (country && county) {
-                    alert(`Subcounty: ${subcounty.name}\nCounty: ${county.name}\nCountry: ${country.name}`);
-                }
+                const locations = response.data.locations;
+                locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    locationDropdown.appendChild(option);
+                });
             }).catch(error => {
-                console.error('Error fetching location details:', error);
+                console.error('Error fetching locations:', error);
             });
         }
     }
+    function fetchSublocations() {
+    const locationId = document.getElementById('location').value;
+    const sublocationDropdown = document.getElementById('sublocation');
+    sublocationDropdown.innerHTML = '<option value="">Loading...</option>';
+
+    if (locationId) {
+        axios.get('/search-locations', {
+            params: { location_id: locationId }
+        }).then(response => {
+            const sublocations = response.data.sublocations;
+            sublocationDropdown.innerHTML = '<option value="">-- Select a Sublocation --</option>';
+            if (sublocations.length > 0) {
+                sublocations.forEach(sublocation => {
+                    const option = document.createElement('option');
+                    option.value = sublocation.id;
+                    option.textContent = sublocation.name;
+                    sublocationDropdown.appendChild(option);
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "";
+                option.textContent = "No sublocations available";
+                sublocationDropdown.appendChild(option);
+            }
+        }).catch(error => {
+            console.error('Error fetching sublocations:', error);
+            sublocationDropdown.innerHTML = '<option value="">Error loading sublocations</option>';
+        });
+    }
+}
+
+    function fetchLocationDetails() {
+    const subcountyId = document.getElementById('subcounty').value;
+    const locationDropdown = document.getElementById('location');
+    locationDropdown.innerHTML = '<option value="">-- Select a Location --</option>';
+
+    if (subcountyId) {
+        axios.get('/search-locations', {
+            params: { subcounty_id: subcountyId }
+        }).then(response => {
+            const locations = response.data.locations;
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = location.name;
+                locationDropdown.appendChild(option);
+            });
+        }).catch(error => {
+            console.error('Error fetching locations:', error);
+        });
+    }
+}
+
 </script>
 <style>
         body {
