@@ -9,6 +9,12 @@
 <body>
     <h1>Search Locations</h1>
 
+    <label for="search" class="search-label">Search Any Location:</label>
+<div class="search-container">
+    <input type="text" id="search" class="search-input" placeholder="Enter a country, county, subcounty, location, or sublocation">
+    <button onclick="traceHierarchy()" class="search-button">Search</button>
+</div>
+
     <!-- Dropdown for Countries -->
     <label for="country">Select Country:</label>
     <select id="country" onchange="fetchCounties()">
@@ -47,9 +53,7 @@
     <option value="">-- Select a Sublocation --</option>
 </select>
 
-<label for="search">Search Any  Location:</label>
-<input type="text" id="search" placeholder="Enter a country, county, subcounty, location, or sublocation">
-<button onclick="traceHierarchy()">Search</button>
+
 
 
 
@@ -208,12 +212,12 @@ function traceHierarchy() {
         .then(response => {
             const data = response.data;
 
-            // Clear and update dropdowns with the traced hierarchy
-            document.getElementById('country').innerHTML = `<option value="">${data.country}</option>`;
-            document.getElementById('county').innerHTML = `<option value="">${data.county}</option>`;
-            document.getElementById('subcounty').innerHTML = `<option value="">${data.subcounty}</option>`;
-            document.getElementById('location').innerHTML = `<option value="">${data.location}</option>`;
-            document.getElementById('sublocation').innerHTML = `<option value="">${data.sublocation}</option>`;
+            // Update dropdowns with the traced hierarchy
+            updateDropdown('country', data.country, data.level === 'country');
+            updateDropdown('county', data.county, data.level === 'county');
+            updateDropdown('subcounty', data.subcounty, data.level === 'subcounty');
+            updateDropdown('location', data.location, data.level === 'location');
+            updateDropdown('sublocation', data.sublocation, data.level === 'sublocation');
 
             alert(`Search completed: Found at level - ${data.level}`);
         })
@@ -226,6 +230,49 @@ function traceHierarchy() {
             }
         });
 }
+
+// Utility function to update dropdowns
+function updateDropdown(dropdownId, value, isExactMatch) {
+    const dropdown = document.getElementById(dropdownId);
+    dropdown.innerHTML = ''; // Clear existing options
+
+    // Add the current value to the dropdown
+    const option = document.createElement('option');
+    option.value = isExactMatch ? '' : 'unknown';
+    option.textContent = value;
+    dropdown.appendChild(option);
+
+    // Enable the dropdown if "Unknown" or partially populated
+    if (value === 'Unknown' || !isExactMatch) {
+        dropdown.disabled = false;
+        loadOptions(dropdownId); // Load options dynamically
+    } else {
+        dropdown.disabled = true; // Disable the dropdown if already selected
+    }
+}
+
+// Function to fetch and load options into a dropdown
+function loadOptions(level) {
+    axios.get(`/get-${level}-options`)
+        .then(response => {
+            const dropdown = document.getElementById(level);
+            const options = response.data.options;
+
+            // Populate dropdown with options
+            options.forEach(optionData => {
+                const option = document.createElement('option');
+                option.value = optionData.id;
+                option.textContent = optionData.name;
+                dropdown.appendChild(option);
+            });
+
+            dropdown.disabled = false; // Enable the dropdown after populating
+        })
+        .catch(error => {
+            console.error(`Error loading ${level} options:`, error);
+        });
+}
+
 
 
 
@@ -301,6 +348,61 @@ function traceHierarchy() {
             color: #999;
             font-style: italic;
         }
+        .search-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-top: 20px;
+    }
+
+    /* Styling for the label */
+    .search-label {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin-right: 10px;
+        align-self: center;
+    }
+
+    /* Styling for the input field */
+    .search-input {
+        width: 300px;
+        padding: 12px 15px;
+        font-size: 16px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        transition: border-color 0.3s ease;
+    }
+
+    /* Focus effect for the input field */
+    .search-input:focus {
+        border-color: #4CAF50;
+        outline: none;
+    }
+
+    /* Styling for the button */
+    .search-button {
+        padding: 12px 20px;
+        font-size: 16px;
+        color: white;
+        background-color: #4CAF50;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    /* Hover effect for the button */
+    .search-button:hover {
+        background-color: #45a049;
+    }
+
+    /* Optional: Add spacing to the container */
+    .search-container {
+        margin: 20px auto;
+        max-width: 500px;
+    }
     </style>
 </body>
 </html>

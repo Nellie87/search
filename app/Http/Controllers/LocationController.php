@@ -174,7 +174,33 @@ class LocationController extends Controller
     
         return response()->json(['message' => 'No matching records found.'], 404);
     }
+    public function getOptions(Request $request, $level)
+    {
+        $options = [];
     
+        switch ($level) {
+            case 'country':
+                $options = Country::select('id', 'name')->get();
+                break;
+            case 'county':
+                $options = County::select('id', 'name')->get();
+                break;
+            case 'subcounty':
+                $options = Subcounty::select('id', 'name')->get();
+                break;
+            case 'location':
+                $options = Location::select('id', 'name')->get();
+                break;
+            case 'sublocation':
+                $options = Sublocation::select('id', 'name')->get();
+                break;
+            default:
+                return response()->json(['message' => 'Invalid level'], 400);
+        }
+    
+        return response()->json(['options' => $options]);
+    }
+        
     
 
 }
